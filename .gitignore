@@ -1,0 +1,6 @@
+.gitignore
+settings.py
+*.log
+__pycache__/
+env/
+.vscode/
