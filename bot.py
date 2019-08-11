@@ -26,9 +26,10 @@ def main():
 	dp.add_handler(CommandHandler('start', greet_user, pass_user_data=True)) 
 	dp.add_handler(CommandHandler('cat', send_cat_picture, pass_user_data=True)) # команда /cat
 	dp.add_handler(RegexHandler('^(Прислать котика)$', send_cat_picture, pass_user_data=True)) # если приходит текст с "Прислать котика", то вызываем функцию send_cat_picture
+	dp.add_handler(RegexHandler('^(Сменить аватарку)$', change_avatar, pass_user_data=True))
 	dp.add_handler(MessageHandler(Filters.contact, get_contact, pass_user_data=True))
 	dp.add_handler(MessageHandler(Filters.location, get_location, pass_user_data=True))
-	dp.add_handler(RegexHandler('^(Сменить аватарку)$', change_avatar, pass_user_data=True))
+	dp.add_handler(MessageHandler(Filters.photo, check_user_photo, pass_user_data=True)) # включаем возможность принимать от пользователей фото
 	dp.add_handler(MessageHandler(Filters.text, talk_to_me, pass_user_data=True)) # обработка текстовых сообщений
 	
 	mybot.start_polling()

@@ -1,7 +1,8 @@
 from glob import glob # найти файлы по шаблону (из модуля glob импортируется функция glob)
 import logging
+import os # функции операционной системы (создание файлов, папок...)
 from random import choice # выбрать рандомно
-from utils import get_keyboard, get_user_smile
+from utils import get_keyboard, get_user_smile, is_cat
 
  # вывод информации после /start
 def greet_user(bot, update, user_data):
@@ -42,3 +43,18 @@ def send_cat_picture(bot, update, user_data):
 	# send_photo - функция отправки фото
 	bot.send_photo(chat_id=update.message.chat_id, photo=open(cat_pic, 'rb'), reply_markup=get_keyboard())
 	# chat_id - выбираем чат, открываем фото (rb - потому что картинка бинарный файл)
+
+def check_user_photo(bot, update, user_data):
+	update.message.reply_text('Обрабатываю фото')
+	os.makedirs('downloads', exist_ok=True) # создаем папку и не выбрасывае исключение даже если ее не существует
+	photo_file = bot.getFile(update.message.photo[-1].file_id) # если в бот присылается файл, то телеграмм сам его конвертирует в jpg и созадет несколько вариантов файла (превью), update.message.photo[-1] берем последний элемент (оригинальное изображение), file_id - идентификатор файла
+	filename = os.path.join('downloads', '{}.jpg'.format(photo_file.file_id)) # os.path.join - соединяем название файлов и папок между собой по правильным слешам, пусть сохранение файла и название - это id - это путь до файла
+	photo_file.download(filename) # скачиваем файл
+	update.message.reply_text('Файл сохранен')
+	if is_cat(filename):
+		update.message.reply_text('Котик обнаружен, добавлено в библиотеку')
+		new_filename = os.path.join('images', 'cat_{}.jpg'.format(photo_file.file_id))
+		os.rename(filename, new_filename) # перемещаем файл и переименовываем его
+	else:
+		update.message.reply_text('Котик не обнаружен, не добавлено в библиотеку')
+		os.remove(filename) # удаляем файл если там нету котика
