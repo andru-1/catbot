@@ -5,11 +5,15 @@ from random import choice # выбрать рандомно
 
 from telegram import ReplyKeyboardRemove, ReplyKeyboardMarkup, ParseMode # убирает клавиатуру, показыве клавиатуру, возможность форматирования (html или markdovn)
 from telegram.ext import ConversationHandler # завершение диалога
+from telegram.ext import messagequeue as mq # очереди
 
 from utils import get_keyboard, get_user_smile, is_cat
 
+from bot import subscribers # вызвали список подписчиков
+
  # вывод информации после /start
 def greet_user(bot, update, user_data):
+	print(update.message.chat_id)
 	#print('Вызван /start')
 	smile = get_user_smile(user_data) # выбрали произвольный смайл с собственной функции
 	text_user = 'Привет {}'.format(smile)
@@ -108,3 +112,32 @@ def anketa_skip_comment(bot, update, user_data):
 
 def dontknow(bot, update, user_data):
 	update.message.reply_text('Не понимаю')
+
+def subscribe(bot, update):
+	subscribers.add(update.message.chat_id)
+	update.message.reply_text('Вы подписались')
+	print(subscribers)
+
+def unsubscribe(bot, update):
+	if update.message.chat_id in subscribers: # проверка на то подписан ли пользователь
+		subscribers.remove(update.message.chat_id)
+		update.message.reply_text('Вы отписались')
+	else: # если такого чата нету
+		update.message.reply_text('Вы не подписаны, нажмите /subscribe для подписки')
+
+# декоратор - функция, которая оборачивает в себя нижестоящую функцию, send_updates передается mq.queuedmessage для очереди
+@mq.queuedmessage
+def send_updates(bot, job):
+	for chat_id in subscribers: # в цикле перебираем подписчиков
+		bot.sendMessage(chat_id=chat_id, text='текст')
+
+def set_alarm(bot, update, args, job_queue): # bot - данные бота, args - список пришедших аргументов переданных телеграмом, job_queue - рычаг для очереди задач
+	try:
+		seconds = abs(int(args[0])) # берем нулевой элемент, переводим в число и абсолютное значение
+		job_queue.run_once(alarm, seconds, context=update.message.chat_id) # выполнить 1, alarm - функция которой передается задача c переменными, seconds - через сколько секунд надо выполнить, context = id пользователя которому надо передать
+	except (IndexError, ValueError):
+		update.message.reply_text('введите число секунд после /alarm')
+
+@mq.queuedmessage
+def alarm(bot, job):
+	bot.send_message(chat_id=job.context, text='Сработал будильник')
