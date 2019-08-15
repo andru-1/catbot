@@ -1,5 +1,7 @@
 from pymongo import MongoClient
 import settings
+from emoji import emojize # модуль смайликов
+from random import choice # выбрать рандомно
 
 db = MongoClient(settings.MONGO_LINK)[settings.MONGO_DB]
 
@@ -19,3 +21,12 @@ def get_or_create_user(db, effective_user, message):
 		db.users.insert_one(user)
 
 	return user
+
+def get_user_smile(db, user_data): # что бы не вылетело ошибки и смайл переназначился
+	if not 'smile' in user_data: # если ключа smile нет, то мы ее берем из конфига
+		user_data['smile'] = choice(settings.USER_EMOJI) # use_aliases добавляем - потому что у смайлов есть несколько вариантов обозначений
+		db.users.update_one( # сохранение в бд
+			{'_id': user_data['_id']}, # то что ищем, по _id ищем user_data['_id']
+			{'$set': {'smile': user_data['smile']}} # устанавливаем поле smile м данными user_data['smile']
+		)
+	return emojize(user_data['smile'], use_aliases=True) # возврат пользователю
