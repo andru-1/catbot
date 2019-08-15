@@ -11,10 +11,16 @@ from utils import get_keyboard, get_user_smile, is_cat
 
 from bot import subscribers # вызвали список подписчиков
 
+from db import db, get_or_create_user
+
  # вывод информации после /start
 def greet_user(bot, update, user_data):
-	print(update.message.chat_id)
+	print(update.effective_user) # данные от пользователя
+	print(update.message)
+	#print(update.message.chat_id)
 	#print('Вызван /start')
+	user = get_or_create_user(db, update.effective_user, update.message)
+	print(user)
 	smile = get_user_smile(user_data) # выбрали произвольный смайл с собственной функции
 	text_user = 'Привет {}'.format(smile)
 
