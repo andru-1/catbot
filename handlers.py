@@ -3,7 +3,7 @@ import logging
 import os # функции операционной системы (создание файлов, папок...)
 from random import choice # выбрать рандомно
 
-from telegram import ReplyKeyboardRemove, ReplyKeyboardMarkup, ParseMode # убирает клавиатуру, показыве клавиатуру, возможность форматирования (html или markdovn)
+from telegram import error, ReplyKeyboardRemove, ReplyKeyboardMarkup, ParseMode # перехват ошибок, убирает клавиатуру, показыве клавиатуру, возможность форматирования (html или markdovn)
 from telegram.ext import ConversationHandler # завершение диалога
 from telegram.ext import messagequeue as mq # очереди
 
@@ -11,7 +11,7 @@ from utils import get_keyboard, is_cat
 
 from bot import subscribers # вызвали список подписчиков
 
-from db import db, get_or_create_user, get_user_smile
+from db import db, get_or_create_user, get_user_smile, toggle_subscription, get_subscribers
 
  # вывод информации после /start
 def greet_user(bot, update, user_data):
@@ -133,14 +133,18 @@ def dontknow(bot, update, user_data):
 
 def subscribe(bot, update):
 	user = get_or_create_user(db, update.effective_user, update.message)
-	subscribers.add(update.message.chat_id)
+	if not user.get('subscribed'):
+		toggle_subscription(db, user)
+	#subscribers.add(update.message.chat_id)
 	update.message.reply_text('Вы подписались')
-	print(subscribers)
+	#print(subscribers)
 
 def unsubscribe(bot, update):
 	user = get_or_create_user(db, update.effective_user, update.message)
-	if update.message.chat_id in subscribers: # проверка на то подписан ли пользователь
-		subscribers.remove(update.message.chat_id)
+	#if update.message.chat_id in subscribers
+	if user.get('subscribed'): # проверка на то подписан ли пользователь
+		#subscribers.remove(update.message.chat_id)
+		toggle_subscription(db, user)
 		update.message.reply_text('Вы отписались')
 	else: # если такого чата нету
 		update.message.reply_text('Вы не подписаны, нажмите /subscribe для подписки')
@@ -148,8 +152,12 @@ def unsubscribe(bot, update):
 # декоратор - функция, которая оборачивает в себя нижестоящую функцию, send_updates передается mq.queuedmessage для очереди
 @mq.queuedmessage
 def send_updates(bot, job):
-	for chat_id in subscribers: # в цикле перебираем подписчиков
-		bot.sendMessage(chat_id=chat_id, text='текст')
+	#for chat_id in subscribers:
+	for user in get_subscribers(db): # в цикле перебираем подписчиков
+		try: # если ошибок нет
+			bot.sendMessage(chat_id=user['chat_id'], text='текст')
+		except error.BadRequest:
+			print('Chat {} not found'.format(user['chat_id']))
 
 def set_alarm(bot, update, args, job_queue): # bot - данные бота, args - список пришедших аргументов переданных телеграмом, job_queue - рычаг для очереди задач
 	user = get_or_create_user(db, update.effective_user, update.message)

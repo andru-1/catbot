@@ -30,3 +30,18 @@ def get_user_smile(db, user_data): # что бы не вылетело ошиб�
 			{'$set': {'smile': user_data['smile']}} # устанавливаем поле smile м данными user_data['smile']
 		)
 	return emojize(user_data['smile'], use_aliases=True) # возврат пользователю
+
+#  переключатель подписки и отписки
+def toggle_subscription(db, user_data):
+	if not user_data.get('subscribed'): # если не нету subscribed или переключатель False
+		user_data['subscribed'] = True
+	else: # если подписан
+		user_data['subscribed'] = False
+	db.users.update_one(
+		{'_id': user_data['_id']},
+		{'$set': {'subscribed': user_data['subscribed']}}
+	)
+
+# берем активных подписчиков 
+def get_subscribers(db):
+	return db.users.find({'subscribed': True})
