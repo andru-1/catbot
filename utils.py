@@ -9,7 +9,7 @@ def get_keyboard():
 	my_keyboard = ReplyKeyboardMarkup([
 			['Прислать котика', 'Сменить аватарку'],
 			[contact_button, location_button],
-			['Заполнить анкету', 'Показать инлайн клавиатуру']
+			['Заполнить анкету']
 		], resize_keyboard=True
 	) # делаем кнупку которая вызовет меню кошечек
 	return my_keyboard
