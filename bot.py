@@ -6,7 +6,7 @@ import locale
 from handlers import *
 
 import settings
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler, RegexHandler
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler, RegexHandler, CallbackQueryHandler
 from telegram.ext import messagequeue as mq # очереди
 
 locale.setlocale(locale.LC_ALL, 'ru')
@@ -61,6 +61,8 @@ def main():
 	dp.add_handler(CommandHandler('cat', send_cat_picture, pass_user_data=True)) # команда /cat
 	dp.add_handler(RegexHandler('^(Прислать котика)$', send_cat_picture, pass_user_data=True)) # если приходит текст с "Прислать котика", то вызываем функцию send_cat_picture
 	dp.add_handler(RegexHandler('^(Сменить аватарку)$', change_avatar, pass_user_data=True))
+	dp.add_handler(RegexHandler('^(Показать инлайн клавиатуру)$', show_inline, pass_user_data=True))
+	dp.add_handler(CallbackQueryHandler(inline_button_pressed)) # функция которая вызывается при срабатывание калбека
 	dp.add_handler(MessageHandler(Filters.contact, get_contact, pass_user_data=True))
 	dp.add_handler(MessageHandler(Filters.location, get_location, pass_user_data=True))
 	dp.add_handler(CommandHandler('subscribe', subscribe)) # подписка пользователя
@@ -74,5 +76,3 @@ def main():
 
 if __name__ == "__main__": # если файл вызвали на исполнение (напрямую), то выполняй все что находится внутри этого условия, если из файла что-то импортируют, то выполнять условие ненадо 
 	main()
-
-

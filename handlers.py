@@ -3,7 +3,7 @@ import logging
 import os # функции операционной системы (создание файлов, папок...)
 from random import choice # выбрать рандомно
 
-from telegram import error, ReplyKeyboardRemove, ReplyKeyboardMarkup, ParseMode # перехват ошибок, убирает клавиатуру, показыве клавиатуру, возможность форматирования (html или markdovn)
+from telegram import error, ReplyKeyboardRemove, ReplyKeyboardMarkup, ParseMode, InlineKeyboardButton, InlineKeyboardMarkup # перехват ошибок, убирает клавиатуру, показыве клавиатуру, возможность форматирования (html или markdovn)
 from telegram.ext import ConversationHandler # завершение диалога
 from telegram.ext import messagequeue as mq # очереди
 
@@ -148,6 +148,23 @@ def unsubscribe(bot, update):
 		update.message.reply_text('Вы отписались')
 	else: # если такого чата нету
 		update.message.reply_text('Вы не подписаны, нажмите /subscribe для подписки')
+
+def show_inline(bot, update, user_data):
+	inlinekeyboard = [[InlineKeyboardButton("Смешно", callback_data='1'),
+						InlineKeyboardButton("Не смешно", callback_data='0')]]
+	reply_markup = InlineKeyboardMarkup(inlinekeyboard)
+	update.message.reply_text('Заходят в бар бесконечное число математиков',
+	reply_markup=reply_markup)
+
+def inline_button_pressed(bot, update):
+	#print(update.callback_query)
+	query = update.callback_query
+	try:
+		data = int(query.data)
+		text = ":-)" if data > 0 else ":-("
+	except TypeError:
+		text = "Что-то пошло не так"
+	bot.edit_message_text(text=text, chat_id=query.message.chat.id, message_id=query.message.message_id) # шсправление своего сообщения
 
 # декоратор - функция, которая оборачивает в себя нижестоящую функцию, send_updates передается mq.queuedmessage для очереди
 @mq.queuedmessage
